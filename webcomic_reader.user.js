@@ -764,7 +764,7 @@ var defaultSettings = {
 // @include        http://schizmatic.com/*
 // @include        http://www.yuri-ism.net/*
 // @include        http://www.bringbackroomies.com/*
-// @include        http://blindsprings.com/*
+// @match          *://*.blindsprings.com/*
 // @include        http://www.wtfcomics.com/*archive.html?*
 // @include        http://wtfcomics.com/*archive.html?*
 // @include        http://www.olympusoverdrive.com/index.php?*
@@ -803,7 +803,6 @@ var defaultSettings = {
 // @include        http://www.readmanga.today/*
 // @include        http://www.mangatown.com/manga/*
 // @include        http://www.mymanga.me/manga/*
-// @include        http://www.blindsprings.com/comic/*
 // @include        http://www.legostargalactica.net/*
 // @include        http://hentaihere.com/m/*/*/*
 // @include        http://gomanga.co/reader/read*
@@ -4008,22 +4007,25 @@ var paginas = [
 	{	url:	'bringbackroomies.com',
 		img:	[['#comic img']]
 	},
-	{
-		url:	'blindsprings.com',
+	{	url:	'blindsprings.com',
 		img:	[['#cc-comic']],
-		next:	[['.next']],
+		back:	[['.cc-prev']],
+		next:	[['.cc-next']],
+		first:	[['.cc-first']],
+		last:	[['.cc-last']],
 		extra:	[[['#bottomleft']]],
 		xelem:	'//div[@id="bottomleft"]',
 		js:	function(dir){
 				var disqusJs = selCss('.cc-commentbody>script').innerHTML;
 				DISQUS && DISQUS.reset({
 			  		reload: true,
-			  		config: function () {  
-			  			this.page.identifier = disqusJs.match(/identifier = '(.*)'/)[1];  
+			  		config: function () {
+			  			this.page.identifier = disqusJs.match(/identifier = '(.*)'/)[1];
 			  			this.page.url = disqusJs.match(/url = '(.*)'/)[1];
 					}
 				});
 			},
+		style:	'#topleft{background-size:auto 1061px;height:1061px;}\n#cc-comicbody{height:933px;}\n#wcr_imagen{width:700px !important;height:auto !important;}',
 	},
 	{	url:	'wtfcomics.com',
 		img:	function(html, pos){
