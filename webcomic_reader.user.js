@@ -63,14 +63,7 @@ var defaultSettings = {
 // @include        http://penny-arcade.com/comic*
 // @include        https://www.penny-arcade.com/comic*
 // @include        https://penny-arcade.com/comic*
-// @include        http://www.xkcd.com/*
-// @include        http://xkcd.com/*
-// @include        http://www.xkcd.org/*
-// @include        http://xkcd.org/*
-// @include        http://www.xkcd.net/*
-// @include        http://xkcd.net/*
-// @include        https://www.xkcd.com/*
-// @include        https://xkcd.com/*
+// @match          *://*.xkcd.com/*
 // @include        http://www.giantitp.com/*
 // @include        http://www.dilbert.com/strip/*
 // @include        http://dilbert.com/strip/*
@@ -213,8 +206,7 @@ var defaultSettings = {
 // @include        http://www.jeffzugale.com/*
 // @include        http://www.threepanelsoul.com/*
 // @include        http://threepanelsoul.com/*
-// @include        http://www.oglaf.com/*
-// @include        http://oglaf.com/*
+// @match          *://*.oglaf.com/*
 // @include        http://www.kevinandkell.com/*
 // @include        http://kevinandkell.com/*
 // @include        http://kittyhawkcomic.com/*
@@ -772,8 +764,8 @@ var defaultSettings = {
 // @include        http://schizmatic.com/*
 // @include        http://www.yuri-ism.net/*
 // @include        http://www.bringbackroomies.com/*
-// @include        http://blindsprings.com/*
 // @match          *://*.forgottenordercomic.com/*
+// @match          *://*.blindsprings.com/*
 // @include        http://www.wtfcomics.com/*archive.html?*
 // @include        http://wtfcomics.com/*archive.html?*
 // @include        http://www.olympusoverdrive.com/index.php?*
@@ -812,7 +804,6 @@ var defaultSettings = {
 // @include        http://www.readmanga.today/*
 // @include        http://www.mangatown.com/manga/*
 // @include        http://www.mymanga.me/manga/*
-// @include        http://www.blindsprings.com/comic/*
 // @include        http://www.legostargalactica.net/*
 // @include        http://hentaihere.com/m/*/*/*
 // @include        http://gomanga.co/reader/read*
@@ -1500,10 +1491,32 @@ var paginas = [
 	{	url:	'oglaf.com',
 		img:	[['#strip']],
 		back:	'div[@id="pv" or @id="pvs"]',
-		next:	'div[@id="nx"]',
-		extra:	[['//div[@id="tt"]/img']],
-		style:	'b>div{float:left;}',
-		bgcol:	'#ccc'
+		next:	'div[@id="nx" or @id="ns"]',
+		first:	'div[@id="st"]',
+		last:	function(html){
+					if (window.location.pathname !== "/") {
+						return window.location.protocol + "//" + window.location.hostname;
+					} else {
+						return "";
+					}
+				},
+		extra:	[function(html, pos){
+					var ret = "";
+					try {
+						var alt = xpath('//img[@id="strip"]/@alt', html);
+						if(alt !== "") ret += alt + "<br>";
+					} catch {}
+					try {
+						var imgTitle = xpath('//div[@id="tt"]/img/@title', html);
+						if(imgTitle !== "None" && imgTitle !== "") ret += imgTitle + "<br>";
+					} catch {}
+					try {
+						var img = xpath('//div[@id="tt"]/img', html);
+						return ret + img.outerHTML;
+					} catch {return ret;}
+					}],
+		style:	'b>div{float:left;}\n.content{height:1%;}\n.content:after{clear:both;}\n.content:before,.content:after{content:" ";display:table;}',
+		bgcol:	'#ccc',
 	},
 	{	url:	'kevinandkell.com',
 		back:	'..[@id="prevstrip"]',
@@ -1840,6 +1853,21 @@ var paginas = [
 		img:	[['img[src*="/comics"]']],
 		back:	'img[@id="Previous_Day"]',
 		next:	'img[@id="Next"]'
+	},
+	{	url:	'adis.keenspot.com',
+		img:	[['img[src*="/comics"]']],
+		back:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[2]/a'],
+		next:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[3]/a'],
+		first:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[1]/a'],
+		last:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[4]/a'],
+		extra:	[['//center/table/tbody/tr[2]/td[1]/h2']],
+  },
+	{	url:	'countyoursheep.keenspot.com',
+		img:	[['img[src*="/comics"]']],
+		back:	'(img/@alt | .)="Previous comic"',
+		next:	'(img/@alt | .)="Next comic"',
+		extra:	[['//center/h2'],['//center/p/font']],
+		style:	'body>center>p>font{display: none;}',
 	},
 	{	url:	'*.keenspot.com',
 		img:	[['img[src*="/comics"]']],
@@ -3980,22 +4008,25 @@ var paginas = [
 	{	url:	'bringbackroomies.com',
 		img:	[['#comic img']]
 	},
-	{
-		url:	'blindsprings.com',
+	{	url:	'blindsprings.com',
 		img:	[['#cc-comic']],
-		next:	[['.next']],
+		back:	[['.cc-prev']],
+		next:	[['.cc-next']],
+		first:	[['.cc-first']],
+		last:	[['.cc-last']],
 		extra:	[[['#bottomleft']]],
 		xelem:	'//div[@id="bottomleft"]',
 		js:	function(dir){
 				var disqusJs = selCss('.cc-commentbody>script').innerHTML;
 				DISQUS && DISQUS.reset({
 			  		reload: true,
-			  		config: function () {  
-			  			this.page.identifier = disqusJs.match(/identifier = '(.*)'/)[1];  
+			  		config: function () {
+			  			this.page.identifier = disqusJs.match(/identifier = '(.*)'/)[1];
 			  			this.page.url = disqusJs.match(/url = '(.*)'/)[1];
 					}
 				});
 			},
+		style:	'#topleft{background-size:auto 1061px;height:1061px;}\n#cc-comicbody{height:933px;}\n#wcr_imagen{width:700px !important;height:auto !important;}',
 	},
 	{	url:	'forgottenordercomic.com',
 		img:	[['#cc-comic']],
