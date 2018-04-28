@@ -63,14 +63,7 @@ var defaultSettings = {
 // @include        http://penny-arcade.com/comic*
 // @include        https://www.penny-arcade.com/comic*
 // @include        https://penny-arcade.com/comic*
-// @include        http://www.xkcd.com/*
-// @include        http://xkcd.com/*
-// @include        http://www.xkcd.org/*
-// @include        http://xkcd.org/*
-// @include        http://www.xkcd.net/*
-// @include        http://xkcd.net/*
-// @include        https://www.xkcd.com/*
-// @include        https://xkcd.com/*
+// @match          *://*.xkcd.com/*
 // @include        http://www.giantitp.com/*
 // @include        http://www.dilbert.com/strip/*
 // @include        http://dilbert.com/strip/*
@@ -213,8 +206,7 @@ var defaultSettings = {
 // @include        http://www.jeffzugale.com/*
 // @include        http://www.threepanelsoul.com/*
 // @include        http://threepanelsoul.com/*
-// @include        http://www.oglaf.com/*
-// @include        http://oglaf.com/*
+// @match          *://*.oglaf.com/*
 // @include        http://www.kevinandkell.com/*
 // @include        http://kevinandkell.com/*
 // @include        http://kittyhawkcomic.com/*
@@ -1499,10 +1491,32 @@ var paginas = [
 	{	url:	'oglaf.com',
 		img:	[['#strip']],
 		back:	'div[@id="pv" or @id="pvs"]',
-		next:	'div[@id="nx"]',
-		extra:	[['//div[@id="tt"]/img']],
-		style:	'b>div{float:left;}',
-		bgcol:	'#ccc'
+		next:	'div[@id="nx" or @id="ns"]',
+		first:	'div[@id="st"]',
+		last:	function(html){
+					if (window.location.pathname !== "/") {
+						return window.location.protocol + "//" + window.location.hostname;
+					} else {
+						return "";
+					}
+				},
+		extra:	[function(html, pos){
+					var ret = "";
+					try {
+						var alt = xpath('//img[@id="strip"]/@alt', html);
+						if(alt !== "") ret += alt + "<br>";
+					} catch {}
+					try {
+						var imgTitle = xpath('//div[@id="tt"]/img/@title', html);
+						if(imgTitle !== "None" && imgTitle !== "") ret += imgTitle + "<br>";
+					} catch {}
+					try {
+						var img = xpath('//div[@id="tt"]/img', html);
+						return ret + img.outerHTML;
+					} catch {return ret;}
+					}],
+		style:	'b>div{float:left;}\n.content{height:1%;}\n.content:after{clear:both;}\n.content:before,.content:after{content:" ";display:table;}',
+		bgcol:	'#ccc',
 	},
 	{	url:	'kevinandkell.com',
 		back:	'..[@id="prevstrip"]',
@@ -1847,6 +1861,13 @@ var paginas = [
 		first:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[1]/a'],
 		last:	['//center/table/tbody/tr[2]/td[1]/p/table[1]/tbody/tr/td[2]/table/tbody/tr/td[4]/a'],
 		extra:	[['//center/table/tbody/tr[2]/td[1]/h2']],
+  },
+	{	url:	'countyoursheep.keenspot.com',
+		img:	[['img[src*="/comics"]']],
+		back:	'(img/@alt | .)="Previous comic"',
+		next:	'(img/@alt | .)="Next comic"',
+		extra:	[['//center/h2'],['//center/p/font']],
+		style:	'body>center>p>font{display: none;}',
 	},
 	{	url:	'*.keenspot.com',
 		img:	[['img[src*="/comics"]']],
